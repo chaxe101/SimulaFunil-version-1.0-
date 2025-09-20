@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Plano '${plan}' inválido ou não configurado.` }, { status: 400 });
     }
     
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://simulafunil.com';
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
