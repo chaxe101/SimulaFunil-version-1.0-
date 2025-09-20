@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '../ui/label';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { supabase } from '@/lib/supabase/client';
 
 type Task = Node;
 type ColumnId = 'A Fazer' | 'Fazendo' | 'Feito';
@@ -172,10 +173,11 @@ const KanbanBlock = ({ id, selected }: { id: string; selected: boolean }) => {
 const CustomNodeComponent = ({ data, id, selected }: NodeProps<{ type: string; label?: string, url?: string, fileUrl?: string, fileName?: string, notesText?: string, description?: string, value?: string, subject?: string, message?: string, status?: 'A Fazer' | 'Fazendo' | 'Feito', priority?: 'baixa' | 'media' | 'alta', deadline?: string, isTask?: boolean, tags?: string[], userInitial?: string, isPresentation?: boolean }>) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = React.useState(false);
-  const { setPreviewContent, deleteNode, updateNodeData } = useEditorStore(state => ({
+  const { setPreviewContent, deleteNode, updateNodeData, userPlan } = useEditorStore(state => ({
     setPreviewContent: state.setPreviewContent,
     deleteNode: state.deleteNode,
     updateNodeData: state.updateNodeData,
+    userPlan: state.userPlan,
   }));
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
@@ -210,13 +212,35 @@ const CustomNodeComponent = ({ data, id, selected }: NodeProps<{ type: string; l
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const limits = {
+        free: { maxFileSize: 5 * 1024 * 1024, label: "5 MB" },
+        mensal: { maxFileSize: 100 * 1024 * 1024, label: "100 MB" },
+    };
+    const currentPlanKey = userPlan === 'mensal' ? 'mensal' : 'free';
+    const planLimits = limits[currentPlanKey];
+
+    if (file.size > planLimits.maxFileSize) {
+        toast({
+            variant: 'destructive',
+            title: 'Arquivo muito grande',
+            description: `O arquivo excede o limite de ${planLimits.label} para o seu plano.`
+        });
+        return;
+    }
+
     setIsUploading(true);
     try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Usuário não autenticado.");
+
         const formData = new FormData();
         formData.append('file', file);
         
         const response = await fetch('/api/bunny-upload', {
             method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+            },
             body: formData,
         });
         

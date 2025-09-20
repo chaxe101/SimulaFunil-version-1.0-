@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { ChangeEvent } from 'react';
@@ -21,23 +22,49 @@ import { Calendar as CalendarIcon, Loader2, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase/client';
 
 const FileUploadSection = ({ node, onDataChange }: { node: any, onDataChange: (key: string, value: any) => void }) => {
     const { toast } = useToast();
     const [isUploading, setIsUploading] = React.useState(false);
-    const { updateNodeData } = useEditorStore();
+    const { updateNodeData, userPlan } = useEditorStore(state => ({
+        updateNodeData: state.updateNodeData,
+        userPlan: state.userPlan,
+    }));
 
     const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
+        const limits = {
+            free: { maxFileSize: 5 * 1024 * 1024, label: "5 MB" },
+            mensal: { maxFileSize: 100 * 1024 * 1024, label: "100 MB" },
+        };
+        const currentPlanKey = userPlan === 'mensal' ? 'mensal' : 'free';
+        const planLimits = limits[currentPlanKey];
+
+        if (file.size > planLimits.maxFileSize) {
+            toast({
+                variant: 'destructive',
+                title: 'Arquivo muito grande',
+                description: `O arquivo excede o limite de ${planLimits.label} para o seu plano.`
+            });
+            return;
+        }
+
         setIsUploading(true);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Usuário não autenticado.");
+
             const formData = new FormData();
             formData.append('file', file);
             
             const response = await fetch('/api/bunny-upload', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
                 body: formData,
             });
             

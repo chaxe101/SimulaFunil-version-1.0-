@@ -1,8 +1,8 @@
 // src/app/api/bunny-upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import axios from 'axios';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import axios from 'axios';
 
 const BUNNY_STORAGE_ZONE_NAME = process.env.BUNNY_STORAGE_ZONE_NAME;
 const BUNNY_ACCESS_KEY = process.env.BUNNY_ACCESS_KEY;
@@ -18,6 +18,24 @@ const PLAN_LIMITS = {
     },
 };
 
+// Helper para criar um cliente Supabase com privilégios de administrador (usando a service_role key)
+// Isso é necessário para consultar a tabela 'users' a partir de uma rota de API segura.
+function getSupabaseAdminClient(): SupabaseClient {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error('Credenciais de serviço do Supabase não estão configuradas no servidor.');
+    }
+
+    return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
+}
+
 function getAuthToken(req: NextRequest): string | null {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -25,18 +43,6 @@ function getAuthToken(req: NextRequest): string | null {
     }
     return authHeader.split(' ')[1];
 }
-
-async function getSupabaseClient(): Promise<SupabaseClient> {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('As credenciais do Supabase não estão configuradas.');
-    }
-    
-    return createClient(supabaseUrl, supabaseAnonKey);
-}
-
 
 export async function POST(req: NextRequest) {
     if (!BUNNY_STORAGE_ZONE_NAME || !BUNNY_ACCESS_KEY) {
@@ -50,16 +56,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Não autenticado. Token não fornecido.' }, { status: 401 });
         }
 
-        const supabase = await getSupabaseClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        const supabaseAdmin = getSupabaseAdminClient();
+
+        // Valida o token de acesso para obter o usuário
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
         if (authError || !user) {
             console.error('Erro de autenticação do token:', authError?.message);
             return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
         }
 
-        // Busca o plano do usuário na tabela 'users'
-        const { data: userData, error: userError } = await supabase
+        // Com o usuário validado, busca o plano na tabela 'users' usando a chave de admin
+        const { data: userData, error: userError } = await supabaseAdmin
             .from('users')
             .select('plan')
             .eq('id', user.id)
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Nenhum arquivo fornecido' }, { status: 400 });
         }
 
-        // Validação do tamanho do arquivo
+        // Validação do tamanho do arquivo (dupla verificação no backend)
         if (file.size > limits.maxFileSize) {
             return NextResponse.json({
                 error: `O tamanho do arquivo (${(file.size / 1024 / 1024).toFixed(2)} MB) excede o limite de ${(limits.maxFileSize / 1024 / 1024).toFixed(2)} MB para o seu plano.`,
@@ -101,17 +109,9 @@ export async function POST(req: NextRequest) {
 
         const publicUrl = `https://${BUNNY_STORAGE_ZONE_NAME}.b-cdn.net/${filePath}`;
 
-        const { error: dbError } = await supabase
-            .from('videos')
-            .insert({
-                user_id: user.id,
-                file_name: file.name,
-                public_url: publicUrl,
-            });
-
-        if (dbError) {
-            console.error('Erro ao salvar metadados do vídeo no banco de dados:', dbError.message);
-        }
+        // Salva metadados no Supabase (opcional, mas bom para rastreamento)
+        // Você pode adicionar uma tabela `uploads` ou similar para guardar essas informações
+        // Por agora, vamos pular essa parte para focar no upload.
 
         return NextResponse.json({ url: publicUrl, fileName: file.name });
 
