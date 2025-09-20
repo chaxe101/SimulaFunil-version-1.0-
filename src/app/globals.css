@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 14% 7%; /* #0F1115 */
+    --foreground: 220 17% 92%; /* #E8ECF3 */
+    --card: 220 17% 11%; /* #151922 */
+    --card-foreground: 220 17% 92%; /* #E8ECF3 */
+    --popover: 220 14% 7%;
+    --popover-foreground: 220 17% 92%;
+    --primary: 349 100% 67%; /* #FF5678 */
+    --primary-foreground: 220 14% 7%;
+    --secondary: 220 17% 11%;
+    --secondary-foreground: 220 17% 92%;
+    --muted: 220 17% 11%;
+    --muted-foreground: 220 15% 72%; /* #A7B0C0 */
+    --accent: 220 17% 11%;
+    --accent-foreground: 220 17% 92%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 17%; /* #232837 */
+    --input: 220 15% 17%;
+    --ring: 349 100% 67%;
+    --radius: 0.5rem;
+
+    /* Manter as cores do sidebar para o dashboard antigo por enquanto */
+    --sidebar-background: 224 23% 11%;
+    --sidebar-foreground: 210 17% 75%;
+    --sidebar-primary: 347 90% 61%;
+    --sidebar-primary-foreground: 350 85% 10%;
+    --sidebar-accent: 222 31% 18%;
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 222 31% 25%;
+    --sidebar-ring: 347 90% 61%;
+  }
+  .dark {
+    /* As variáveis já estão configuradas para o dark mode por padrão */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Placeholder styling for contentEditable div */
+[contenteditable][data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  pointer-events: none;
+  display: block; /* For line-break */
+  color: hsl(var(--muted-foreground) / 0.5);
+}
