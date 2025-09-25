@@ -22,20 +22,10 @@ export async function createServerClient() {
           return cookieStore.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options })
-          } catch (error) {
-            // O `set` foi chamado de um Server Component.
-            // Isso pode ser ignorado se você tiver um middleware atualizando as sessões.
-          }
+          console.warn('⚠️ Tentativa de set cookie em Server Component. Use middleware/route handler.')
         },
         remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // O `delete` foi chamado de um Server Component.
-            // Isso pode ser ignorado se você tiver um middleware atualizando as sessões.
-          }
+          console.warn('⚠️ Tentativa de remove cookie em Server Component. Use middleware/route handler.')
         },
       },
     }
