@@ -58,7 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Funnel as Project } from '@/lib/types.tsx';
+import { Funnel as Project } from '@/lib/types';
 import {
   createFunnel as createProject,
   deleteFunnel as deleteProject,
