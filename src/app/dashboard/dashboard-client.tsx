@@ -465,4 +465,4 @@ export function DashboardClient({ initialProjects, userName, userPlan, userId }:
       </DialogContent>
     </Dialog>
   </div>
-);
+)};
