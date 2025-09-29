@@ -1,5 +1,4 @@
-
-'use client';
+"use client";
 
 import { useState, ChangeEvent, useEffect } from "react";
 import Link from "next/link";
@@ -72,7 +71,6 @@ const ProjectCard = ({ project, onDelete, onRename }: { project: Project, onDele
   const [modifiedDate, setModifiedDate] = useState('');
 
   useEffect(() => {
-    // Format date on client to avoid hydration mismatch
     setModifiedDate(new Date(project.updated_at).toLocaleDateString());
   }, [project.updated_at]);
 
@@ -98,7 +96,7 @@ const ProjectCard = ({ project, onDelete, onRename }: { project: Project, onDele
                   <AlertDialogTrigger asChild>
                     <DropdownMenuItem
                       className="text-destructive flex items-center gap-2 cursor-pointer"
-                      onSelect={(e) => e.preventDefault()} // Prevent closing menu
+                      onSelect={(e) => e.preventDefault()}
                     >
                       <Trash2 className="w-4 h-4" /> Deletar
                     </DropdownMenuItem>
@@ -129,15 +127,11 @@ const ProjectCard = ({ project, onDelete, onRename }: { project: Project, onDele
       <CardContent className="flex-grow space-y-4">
           <div className="flex items-center text-sm text-muted-foreground gap-2">
             <CalendarDays className="w-4 h-4" />
-            <span>
-              Modificado em {modifiedDate}
-            </span>
+            <span>Modificado em {modifiedDate}</span>
           </div>
           <div className="flex items-center text-sm text-muted-foreground gap-2">
             <Blocks className="w-4 h-4" />
-            <span>
-              {project.nodes?.length || 0} blocos
-            </span>
+            <span>{project.nodes?.length || 0} blocos</span>
           </div>
       </CardContent>
       <CardFooter>
@@ -161,13 +155,18 @@ export function DashboardClient({ initialProjects, userName, userPlan, userId }:
   const { toast } = useToast();
 
   const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [isLoading, setIsLoading] = useState(false); // Only for actions, not initial load
+  const [isLoading, setIsLoading] = useState(false);
   const [isCreateProjectOpen, setCreateProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
 
   const [isRenameModalOpen, setRenameModalOpen] = useState(false);
   const [projectToRename, setProjectToRename] = useState<Project | null>(null);
   const [renameProjectName, setRenameProjectName] = useState("");
+
+  // 🔴 Debug: mostrar o que vem do servidor
+  useEffect(() => {
+    console.log("📌 DashboardClient props:", { initialProjects, userName, userPlan, userId });
+  }, [initialProjects, userName, userPlan, userId]);
 
   const handleCreateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -269,149 +268,201 @@ export function DashboardClient({ initialProjects, userName, userPlan, userId }:
   };
   
   return (
-    <div className="space-y-6">
-       {userPlan === 'free' && (
-        <Alert className="bg-primary/10 border-primary/20 text-foreground">
-            <Crown className="h-5 w-5 text-primary" />
-            <AlertTitle className="font-bold text-lg text-primary">Desbloqueie todo o potencial da plataforma!</AlertTitle>
-            <AlertDescription className="mt-2">
-                <p className="mb-3">Você está no plano gratuito. Com o plano Pro, você ganha acesso a:</p>
-                <ul className="space-y-1.5 list-none pl-1 text-sm">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-400" /> Projetos e blocos ilimitados</li>
-                    <li className="flex items-center gap-2"><Presentation className="h-4 w-4 text-green-400" /> Modo Apresentação Profissional (sem marca d'água)</li>
-                    <li className="flex items-center gap-2"><FileText className="h-4 w-4 text-green-400" /> Exportação de projetos em PDF</li>
-                    <li className="flex items-center gap-2"><Users className="h-4 w-4 text-green-400" /> Acesso a templates e Kanban avançado</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-400" /> Suporte prioritário</li>
-                </ul>
-            </AlertDescription>
-            <Button asChild className="mt-4">
-                <Link href="/dashboard/plan">Fazer Upgrade Agora</Link>
-            </Button>
-        </Alert>
-       )}
+  <div className="space-y-6">
+    {/* Alerta de upgrade */}
+    {userPlan === "free" && (
+      <Alert className="bg-primary/10 border-primary/20 text-foreground">
+        <Crown className="h-5 w-5 text-primary" />
+        <AlertTitle className="font-bold text-lg text-primary">
+          Desbloqueie todo o potencial da plataforma!
+        </AlertTitle>
+        <AlertDescription className="mt-2">
+          <p className="mb-3">
+            Você está no plano gratuito. Com o plano Pro, você ganha acesso a:
+          </p>
+          <ul className="space-y-1.5 list-none pl-1 text-sm">
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-400" /> Projetos e
+              blocos ilimitados
+            </li>
+            <li className="flex items-center gap-2">
+              <Presentation className="h-4 w-4 text-green-400" /> Modo
+              Apresentação Profissional (sem marca d'água)
+            </li>
+            <li className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-green-400" /> Exportação de
+              projetos em PDF
+            </li>
+            <li className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-green-400" /> Acesso a templates e
+              Kanban avançado
+            </li>
+            <li className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-400" /> Suporte
+              prioritário
+            </li>
+          </ul>
+        </AlertDescription>
+        <Button asChild className="mt-4">
+          <Link href="/dashboard/plan">Fazer Upgrade Agora</Link>
+        </Button>
+      </Alert>
+    )}
 
+    {/* Saudação */}
+    <div>
+      <h1 className="text-3xl font-bold font-headline">Olá, {userName} 👋</h1>
+    </div>
+
+    {/* Header Meus Projetos */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Olá, {userName} 👋</h1>
+        <h2 className="text-2xl font-bold font-headline">Meus Projetos</h2>
+        <p className="text-muted-foreground">Gerencie seus projetos visuais</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold font-headline">Meus Projetos</h2>
-            <p className="text-muted-foreground">Gerencie seus projetos visuais</p>
-          </div>
-          <div className="flex w-full sm:w-auto items-center gap-2">
-            <div className="relative flex-grow sm:flex-grow-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar projetos..."
-                className="w-full rounded-lg bg-card pl-8 sm:w-[200px] lg:w-[250px]"
-              />
-            </div>
-             <Button variant="secondary" className="hidden sm:inline-flex" asChild>
-               <Label htmlFor="upload-project-json" className="cursor-pointer">
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                  Importar JSON
-                </Label>
+      {/* Ações */}
+      <div className="flex w-full sm:w-auto items-center gap-2">
+        {/* Busca */}
+        <div className="relative flex-grow sm:flex-grow-0">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar projetos..."
+            className="w-full rounded-lg bg-card pl-8 sm:w-[200px] lg:w-[250px]"
+          />
+        </div>
+
+        {/* Importar JSON */}
+        <Button variant="secondary" className="hidden sm:inline-flex" asChild>
+          <Label htmlFor="upload-project-json" className="cursor-pointer">
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            Importar JSON
+          </Label>
+        </Button>
+        <input
+          type="file"
+          id="upload-project-json"
+          accept="application/json"
+          className="hidden"
+          onChange={handleFileUpload}
+          disabled={isLoading}
+        />
+
+        {/* Criar Novo Projeto */}
+        <Dialog open={isCreateProjectOpen} onOpenChange={setCreateProjectOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Criar Novo Projeto
             </Button>
-            <input 
-              type="file" 
-              id="upload-project-json" 
-              accept="application/json" 
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={isLoading}
-            />
-             <Dialog open={isCreateProjectOpen} onOpenChange={setCreateProjectOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar Novo Projeto
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleCreateProject}>
+              <DialogHeader>
+                <DialogTitle>Criar Novo Projeto</DialogTitle>
+                <DialogDescription>
+                  Dê um nome ao seu novo projeto. Você poderá alterá-lo depois.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="project-name" className="text-right">
+                    Nome
+                  </Label>
+                  <Input
+                    id="project-name"
+                    className="col-span-3"
+                    placeholder="Ex: Planejamento de Lançamento"
+                    required
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    "Criar Projeto"
+                  )}
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                 <form onSubmit={handleCreateProject}>
-                    <DialogHeader>
-                      <DialogTitle>Criar Novo Projeto</DialogTitle>
-                      <DialogDescription>
-                        Dê um nome ao seu novo projeto. Você poderá alterá-lo depois.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="project-name" className="text-right">
-                          Nome
-                        </Label>
-                        <Input
-                          id="project-name"
-                          className="col-span-3"
-                          placeholder="Ex: Planejamento de Lançamento"
-                          required
-                          value={newProjectName}
-                          onChange={(e) => setNewProjectName(e.target.value)}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Criar Projeto'}
-                      </Button>
-                    </DialogFooter>
-                 </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
+    </div>
 
-      <div className="mt-6">
+    {/* Lista de Projetos */}
+    <div className="mt-6">
       {projects.length > 0 ? (
         <div className="grid gap-6 md:gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} onRename={openRenameModal} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onDelete={handleDeleteProject}
+              onRename={openRenameModal}
+            />
           ))}
         </div>
       ) : (
-          <div className="text-center py-16 text-muted-foreground">
-              <p>Nenhum projeto encontrado.</p>
-              <p className="mt-2">Que tal criar o seu primeiro?</p>
-          </div>
+        <div className="text-center py-16 text-muted-foreground">
+          <p>Nenhum projeto encontrado.</p>
+          <p className="mt-2">Que tal criar o seu primeiro?</p>
+        </div>
       )}
-      </div>
-
-       <Dialog open={isRenameModalOpen} onOpenChange={setRenameModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleRenameProject}>
-            <DialogHeader>
-              <DialogTitle>Renomear Projeto</DialogTitle>
-              <DialogDescription>
-                Digite o novo nome para o projeto "{projectToRename?.name}".
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="rename-project-name" className="text-right">
-                  Nome
-                </Label>
-                <Input
-                  id="rename-project-name"
-                  className="col-span-3"
-                  value={renameProjectName}
-                  onChange={(e) => setRenameProjectName(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setRenameModalOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar'}
-                </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
+
+    {/* Modal Renomear Projeto */}
+    <Dialog open={isRenameModalOpen} onOpenChange={setRenameModalOpen}>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleRenameProject}>
+          <DialogHeader>
+            <DialogTitle>Renomear Projeto</DialogTitle>
+            <DialogDescription>
+              Digite o novo nome para o projeto "{projectToRename?.name}".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rename-project-name" className="text-right">
+                Nome
+              </Label>
+              <Input
+                id="rename-project-name"
+                className="col-span-3"
+                value={renameProjectName}
+                onChange={(e) => setRenameProjectName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setRenameModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  </div>
+);

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -51,38 +50,71 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+    const checkSession = async () => {
+      try {
+        // Verifica se a sessão está válida
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.log("❌ Sessão inválida ou expirada");
+          router.push('/login');
+          return;
+        }
+
         setUser(session.user);
-      } else {
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
         router.push('/login');
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    getUser();
+    checkSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    // Escuta mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Auth state changed:", event);
+
       if (event === 'SIGNED_OUT') {
+        setUser(null);
         router.push('/login');
-      } else if (event === 'SIGNED_IN') {
-        setUser(session?.user ?? null);
+      } else if (event === 'SIGNED_IN' && session) {
+        setUser(session.user);
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        setUser(session.user);
+        router.refresh();
+      } else if (!session) {
+        // Se não tem sessão em nenhum evento, redireciona
+        router.push('/login');
       }
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, [router]);
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível fazer logout." });
-    } else {
-      toast({ title: "Logout realizado com sucesso!" });
-      router.push('/login');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast({ 
+          variant: "destructive", 
+          title: "Erro", 
+          description: "Não foi possível fazer logout." 
+        });
+      } else {
+        toast({ title: "Logout realizado com sucesso!" });
+        router.push('/login');
+      }
+    } catch (error) {
+      console.error("Erro no logout:", error);
+      toast({ 
+        variant: "destructive", 
+        title: "Erro", 
+        description: "Erro inesperado ao fazer logout." 
+      });
     }
   };
 
@@ -113,12 +145,10 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    // This is a fallback, the useEffect should already have redirected.
     return null;
   }
   
   const userInitial = user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
-
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
