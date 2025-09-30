@@ -50,21 +50,22 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) {
-        window.location.href = '/login';
-        return;
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
       }
-      
-      setUser(session.user);
-      setIsLoading(false);
-    };
+    };  
 
     getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
       console.log("Auth state changed:", event);
 
       if (event === 'SIGNED_OUT') {
@@ -75,6 +76,7 @@ export default function DashboardLayout({
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
