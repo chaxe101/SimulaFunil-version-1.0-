@@ -62,7 +62,6 @@ export default function DashboardLayout({
       console.log("Auth state changed:", event);
 
       if (event === 'SIGNED_OUT') {
-        setUser(null);
         window.location.href = '/login';
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
@@ -124,7 +123,11 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
   
   const userInitial = user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
