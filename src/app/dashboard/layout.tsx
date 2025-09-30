@@ -52,7 +52,13 @@ export default function DashboardLayout({
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      setUser(session.user);
       setIsLoading(false);
     };
 
@@ -123,11 +129,7 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
+    return null;
   }
   
   const userInitial = user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
