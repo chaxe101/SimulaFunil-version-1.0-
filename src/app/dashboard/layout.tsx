@@ -50,43 +50,31 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // Verifica se a sessão está válida
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          console.log("❌ Sessão inválida ou expirada");
-          router.push('/login');
-          return;
-        }
-
-        setUser(session.user);
-      } catch (error) {
-        console.error("Erro ao verificar sessão:", error);
-        router.push('/login');
-      } finally {
-        setIsLoading(false);
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Força reload para o middleware redirecionar
+        window.location.href = '/login';
+        return;
       }
+      
+      setUser(session.user);
+      setIsLoading(false);
     };
 
-    checkSession();
+    getUser();
 
     // Escuta mudanças na autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Auth state changed:", event);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event);
 
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        router.push('/login');
-      } else if (event === 'SIGNED_IN' && session) {
-        setUser(session.user);
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        setUser(session.user);
+      if (event === 'SIGNED_OUT' || !session) {
+        // Força reload para o middleware redirecionar
+        window.location.href = '/login';
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
         router.refresh();
-      } else if (!session) {
-        // Se não tem sessão em nenhum evento, redireciona
-        router.push('/login');
       }
     });
 
