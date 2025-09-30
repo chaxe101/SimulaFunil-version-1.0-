@@ -52,36 +52,27 @@ export default function DashboardLayout({
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Força reload para o middleware redirecionar
-        window.location.href = '/login';
-        return;
-      }
-      
-      setUser(session.user);
+      setUser(session?.user ?? null);
       setIsLoading(false);
     };
 
     getUser();
 
-    // Escuta mudanças na autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event);
 
-      if (event === 'SIGNED_OUT' || !session) {
-        // Força reload para o middleware redirecionar
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
         window.location.href = '/login';
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
-        router.refresh();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -94,7 +85,7 @@ export default function DashboardLayout({
         });
       } else {
         toast({ title: "Logout realizado com sucesso!" });
-        router.push('/login');
+        window.location.href = '/login';
       }
     } catch (error) {
       console.error("Erro no logout:", error);
