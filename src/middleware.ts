@@ -52,14 +52,15 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = pathname === '/login' || pathname === '/register'
   const publicPaths = ['/', '/suporte', '/exemplo']
+  const isEditorPage = pathname.startsWith('/editor')
 
-  // Já logado → manda pro dashboard
+  // Já logado → manda pro dashboard (exceto se for editor)
   if (isAuthPage && session) {
     console.log('✅ Usuário logado tentando acessar', pathname, '→ redirecionando para /dashboard')
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Não logado → bloqueia páginas privadas
+  // Não logado → bloqueia páginas privadas (incluindo editor)
   if (!session && !isAuthPage && !publicPaths.some((p) => pathname.startsWith(p))) {
     console.log('❌ Usuário não logado tentando acessar', pathname, '→ redirecionando para /login')
     return NextResponse.redirect(new URL('/login', request.url))

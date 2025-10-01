@@ -50,36 +50,32 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+  let mounted = true;
 
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (mounted) {
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-      }
-    };  
+  const getUser = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (mounted && session?.user) {
+      setUser(session.user);
+    }
+  };
 
-    getUser();
+  getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (!mounted) return;
 
-      console.log("Auth state changed:", event);
+    if (event === 'SIGNED_OUT') {
+      window.location.href = '/login';
+    } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+      setUser(session.user);
+    }
+  });
 
-      if (event === 'SIGNED_OUT') {
-        window.location.href = '/login';
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setUser(session?.user ?? null);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
+}, []);
 
   const handleLogout = async () => {
     try {
@@ -122,19 +118,9 @@ export default function DashboardLayout({
     </nav>
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
   
-  const userInitial = user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U';
+  
+  const userInitial = user?.user_metadata?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -150,9 +136,9 @@ export default function DashboardLayout({
             <SidebarNav />
           </div>
           <div className="mt-auto p-4">
-             <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
+            <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
             </Button>
           </div>
         </div>
@@ -167,7 +153,7 @@ export default function DashboardLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="bg-sidebar flex flex-col p-0">
-               <div className="flex h-[60px] items-center border-b px-6">
+              <div className="flex h-[60px] items-center border-b px-6">
                 <Link href="/" className="flex items-center gap-2 font-semibold">
                   <Logo className="h-6 w-6 text-primary" />
                   <span className="font-headline text-xl">SimulaFunil</span>
@@ -176,22 +162,22 @@ export default function DashboardLayout({
               <SidebarNav className="mt-4" />
               <div className="mt-auto p-4 border-t border-border/50">
                 <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
                 </Button>
               </div>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1" />
-           <Button variant="ghost" size="icon" className="rounded-full">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notificações</span>
-              </Button>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Bell className="h-5 w-5" />
+            <span className="sr-only">Notificações</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src={user.user_metadata?.avatar_url || ''} />
+                  <AvatarImage src={user?.user_metadata?.avatar_url || ''} />
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               </Button>
@@ -199,17 +185,19 @@ export default function DashboardLayout({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
-                 <Link href="/dashboard/settings">Configurações</Link>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings">Configurações</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-               <DropdownMenuItem onClick={handleLogout}>
-                 Sair
+              <DropdownMenuItem onClick={handleLogout}>
+                Sair
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 p-4 sm:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

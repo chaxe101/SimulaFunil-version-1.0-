@@ -1,4 +1,3 @@
-
 'use client';
 
 import { FunnelEditor } from '@/components/funnel-editor/editor';
@@ -23,7 +22,6 @@ import { ContentPreviewModal } from '@/components/funnel-editor/content-preview-
 import { HubView } from '@/components/views/hub-view';
 import { FloatingToolbar } from '@/components/funnel-editor/floating-toolbar';
 
-
 export default function EditorPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -32,6 +30,7 @@ export default function EditorPage() {
 
   const [projectName, setProjectName] = useState('Carregando...');
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     setFunnelId,
@@ -63,43 +62,44 @@ export default function EditorPage() {
 
   useEffect(() => {
     const fetchUserAndProject = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setUser(session.user);
+        }
+        
         setFunnelId(funnelId);
 
-        try {
-          const { funnelData, userData } = await getFunnelAndUserData(funnelId, session.user.id);
-          if (funnelData) {
-            setProjectName(funnelData.name);
-            setNodes(funnelData.nodes || []);
-            setEdges(funnelData.edges || []);
-            setPresentationOrder(funnelData.presentation_order || []);
-            setInitialNotes(funnelData.notes);
-            setCalendarEvents(funnelData.calendar_events || []);
-            setUserPlan(userData?.plan || 'free');
-            
-            // Set view based on URL param or default to hub
-            const viewFromUrl = searchParams.get('view') as EditorView;
-            setCurrentView(viewFromUrl || 'hub');
-
-          } else {
-            throw new Error('Projeto não encontrado.');
-          }
-        } catch (error) {
-          console.error(error);
-          router.push('/dashboard');
+        const userId = session?.user?.id || '';
+        const { funnelData, userData } = await getFunnelAndUserData(funnelId, userId);
+        
+        if (funnelData) {
+          setProjectName(funnelData.name);
+          setNodes(funnelData.nodes || []);
+          setEdges(funnelData.edges || []);
+          setPresentationOrder(funnelData.presentation_order || []);
+          setInitialNotes(funnelData.notes);
+          setCalendarEvents(funnelData.calendar_events || []);
+          setUserPlan(userData?.plan || 'free');
+          
+          const viewFromUrl = searchParams.get('view') as EditorView;
+          setCurrentView(viewFromUrl || 'hub');
+        } else {
+          throw new Error('Projeto não encontrado.');
         }
-      } else {
-        router.push('/login');
+      } catch (error) {
+        console.error(error);
+        router.push('/dashboard');
+      } finally {
+        setIsLoading(false);
       }
     };
+    
     fetchUserAndProject();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [funnelId]);
 
-
-  if (!user) {
+  if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#0F1115]">
         <Loader2 className="h-12 w-12 animate-spin text-[#FF5678]" />
@@ -109,34 +109,34 @@ export default function EditorPage() {
 
   const renderCurrentView = () => {
     switch (currentView) {
-        case 'hub':
-            return <HubView />;
-        case 'kanban':
-            return <KanbanView />;
-        case 'calendar':
-            return (
-                 <ScrollArea className="h-full">
-                    <div className="flex flex-col h-[150vh]">
-                        <div className="min-h-[80vh]">
-                            <CalendarView />
-                        </div>
-                        <div className="min-h-[70vh]">
-                             <TimelineView />
-                        </div>
-                    </div>
-                </ScrollArea>
-            );
-        case 'notes':
-            return <NotesView />;
-        case 'timeline':
-            return <TimelineView />;
-        case 'fluxo':
-        default:
-            return (
-                <ReactFlowProvider>
-                    <FunnelEditor funnelId={funnelId} />
-                </ReactFlowProvider>
-            );
+      case 'hub':
+        return <HubView />;
+      case 'kanban':
+        return <KanbanView />;
+      case 'calendar':
+        return (
+          <ScrollArea className="h-full">
+            <div className="flex flex-col h-[150vh]">
+              <div className="min-h-[80vh]">
+                <CalendarView />
+              </div>
+              <div className="min-h-[70vh]">
+                <TimelineView />
+              </div>
+            </div>
+          </ScrollArea>
+        );
+      case 'notes':
+        return <NotesView />;
+      case 'timeline':
+        return <TimelineView />;
+      case 'fluxo':
+      default:
+        return (
+          <ReactFlowProvider>
+            <FunnelEditor funnelId={funnelId} />
+          </ReactFlowProvider>
+        );
     }
   };
   
@@ -148,7 +148,7 @@ export default function EditorPage() {
       <div className="flex flex-1 overflow-hidden">
         {isCanvasView ? <FloatingToolbar /> : <EditorSidebar />}
         <main className="flex-1 overflow-auto relative h-full">
-           {renderCurrentView()}
+          {renderCurrentView()}
         </main>
         {selectedNode && currentView === 'fluxo' && <PropertiesPanel />}
       </div>
