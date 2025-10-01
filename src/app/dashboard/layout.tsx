@@ -78,27 +78,20 @@ export default function DashboardLayout({
 }, []);
 
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast({ 
-          variant: "destructive", 
-          title: "Erro", 
-          description: "Não foi possível fazer logout." 
-        });
-      } else {
-        toast({ title: "Logout realizado com sucesso!" });
-        window.location.href = '/login';
-      }
-    } catch (error) {
-      console.error("Erro no logout:", error);
-      toast({ 
-        variant: "destructive", 
-        title: "Erro", 
-        description: "Erro inesperado ao fazer logout." 
-      });
+  try {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
     }
-  };
+    
+    window.location.replace('/login');
+  } catch (error) {
+    console.error("Erro no logout:", error);
+    window.location.replace('/login');
+  }
+};
 
   const SidebarNav = ({ className }: { className?: string }) => (
     <nav className={cn("grid items-start px-4 text-sm font-medium", className)}>
