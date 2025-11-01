@@ -1,10 +1,9 @@
-
 'use client';
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
-import { ChevronRight, Save, Presentation, LayoutGrid, Calendar, PenSquare, KanbanSquare, FileDown, Settings2, Home, Loader2 } from "lucide-react";
+import { Save, Presentation, LayoutGrid, Calendar, PenSquare, KanbanSquare, FileDown, Settings2, Home, Loader2 } from "lucide-react";
 import { useEditorStore, EditorView } from "@/stores/editor-store";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -25,30 +24,74 @@ const views: { id: EditorView; label: string; icon: React.ReactNode }[] = [
     { id: 'notes', label: 'Anotações', icon: <PenSquare /> },
 ];
 
-const ViewSwitcher = () => {
+const ViewSwitcher = ({ isHovered }: { isHovered: boolean }) => {
     const { currentView, setCurrentView } = useEditorStore(state => ({
         currentView: state.currentView,
         setCurrentView: state.setCurrentView,
     }));
 
     return (
-        <div className="flex items-center gap-1 rounded-lg bg-[#151922] p-1">
+        <>
+            {/* Logo + Dashboard Button */}
+            <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        asChild
+                        className={cn(
+                            "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                            isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                        )}
+                    >
+                        <Link href="/dashboard">
+                            <Logo className={cn('h-4 w-4 text-[#FF5678] transition-all duration-300', isHovered && 'mr-2')} />
+                            <span className={cn(
+                                "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                            )}>
+                                Dashboard
+                            </span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="group-hover:hidden">
+                    <p>Voltar para Dashboard</p>
+                </TooltipContent>
+            </Tooltip>
+
+            <div className="w-px h-6 bg-border mx-2"></div>
+
             {views.map(view => (
-                <Button
-                    key={view.id}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setCurrentView(view.id)}
-                    className={cn(
-                        "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3]",
-                        currentView === view.id && "bg-[#232837] text-[#E8ECF3]"
-                    )}
-                >
-                    {React.cloneElement(view.icon as React.ReactElement, { className: 'h-4 w-4 mr-2' })}
-                    {view.label}
-                </Button>
+                <Tooltip key={view.id} delayDuration={300}>
+                    <TooltipTrigger asChild>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setCurrentView(view.id)}
+                            className={cn(
+                                "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                                currentView === view.id && "bg-[#232837] text-[#E8ECF3]",
+                                isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                            )}
+                        >
+                            {React.cloneElement(view.icon as React.ReactElement, { 
+                                className: cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2') 
+                            })}
+                            <span className={cn(
+                                "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                            )}>
+                                {view.label}
+                            </span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="group-hover:hidden">
+                        <p>{view.label}</p>
+                    </TooltipContent>
+                </Tooltip>
             ))}
-        </div>
+        </>
     );
 };
 
@@ -58,6 +101,8 @@ export const Header = ({ projectName }: HeaderProps) => {
     const [isReorderModalOpen, setReorderModalOpen] = React.useState(false);
     const [isSaving, setIsSaving] = React.useState(false);
     const [isStartingPresentation, setIsStartingPresentation] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
+    const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const { 
         exportToJson,
         exportToPdf,
@@ -112,60 +157,176 @@ export const Header = ({ projectName }: HeaderProps) => {
         }
     }
 
+    const handleMouseEnter = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+        }
+        setIsHovered(true);
+    };
+
+    const handleMouseLeave = () => {
+        hoverTimeoutRef.current = setTimeout(() => {
+            setIsHovered(false);
+        }, 200);
+    };
+
+    React.useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+        };
+    }, []);
+
     return (
         <>
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#232837] px-4 flex-col md:flex-row gap-4 md:gap-0 py-2 md:py-0">
-                <div className="flex items-center gap-2 text-sm self-start md:self-center">
-                    <Link href="/dashboard">
-                        <Logo className="h-5 w-5 text-[#FF5678]" />
-                    </Link>
-                    <ChevronRight className="h-4 w-4 text-[#A7B0C0]" />
-                    <span className="font-semibold text-[#E8ECF3] truncate max-w-xs">{projectName}</span>
-                </div>
-                
-                <div className="flex-grow flex items-center justify-center">
-                    <ViewSwitcher />
-                </div>
-
-                <div className="flex items-center gap-2 self-end md:self-center">
+            <header 
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-auto group"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+            >
+                <div className="flex items-center gap-1 rounded-lg bg-card/80 p-1 border border-border backdrop-blur-sm shadow-lg">
                     <TooltipProvider>
-                        <Tooltip>
+                        <ViewSwitcher isHovered={isHovered} />
+                        
+                        <div className="w-px h-6 bg-border mx-2"></div>
+                        
+                        <Tooltip delayDuration={300}>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3]" onClick={handleExportJson}>
-                                    <FileDown className="h-4 w-4 mr-1"/>
-                                    JSON
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={cn(
+                                        "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                                        isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                                    )}
+                                    onClick={handleExportJson}
+                                >
+                                    <FileDown className={cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2')}/>
+                                    <span className={cn(
+                                        "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    )}>
+                                        JSON
+                                    </span>
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent className="group-hover:hidden">
                                 <p>Exportar para JSON</p>
                             </TooltipContent>
                         </Tooltip>
-                        <Tooltip>
+                        
+                        <Tooltip delayDuration={300}>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3]" onClick={handleExportPdf}>
-                                    <FileDown className="h-4 w-4 mr-1"/>
-                                    PDF
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={cn(
+                                        "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                                        isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                                    )}
+                                    onClick={handleExportPdf}
+                                >
+                                    <FileDown className={cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2')}/>
+                                    <span className={cn(
+                                        "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    )}>
+                                        PDF
+                                    </span>
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
+                            <TooltipContent className="group-hover:hidden">
                                 <p>Exportar PDF da visão atual</p>
                             </TooltipContent>
                         </Tooltip>
+                        
+                        <div className="w-px h-6 bg-border mx-2"></div>
+                        
+                        <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={cn(
+                                        "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                                        isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                                    )}
+                                    onClick={() => setReorderModalOpen(true)}
+                                >
+                                    <Settings2 className={cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2')}/>
+                                    <span className={cn(
+                                        "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    )}>
+                                        Montar Apresentação
+                                    </span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="group-hover:hidden">
+                                <p>Montar Apresentação</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className={cn(
+                                        "text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3] h-9 transition-all duration-300",
+                                        isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                                    )}
+                                    onClick={handleStartPresentation} 
+                                    disabled={isStartingPresentation}
+                                >
+                                    {isStartingPresentation ? (
+                                        <Loader2 className={cn('h-4 w-4 animate-spin transition-all duration-300', isHovered && 'mr-2')}/>
+                                    ) : (
+                                        <Presentation className={cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2')}/>
+                                    )}
+                                    <span className={cn(
+                                        "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    )}>
+                                        Apresentar
+                                    </span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="group-hover:hidden">
+                                <p>Apresentar</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                    size="sm" 
+                                    className={cn(
+                                        "bg-[#FF5678] text-[#0F1115] hover:bg-pink-500 h-9 transition-all duration-300",
+                                        isHovered ? "w-auto px-3" : "w-9 p-0 justify-center"
+                                    )}
+                                    onClick={handleSave} 
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? (
+                                        <Loader2 className={cn('h-4 w-4 animate-spin transition-all duration-300', isHovered && 'mr-2')}/>
+                                    ) : (
+                                        <Save className={cn('h-4 w-4 transition-all duration-300', isHovered && 'mr-2')} />
+                                    )}
+                                    <span className={cn(
+                                        "transition-all duration-300 delay-100 overflow-hidden whitespace-nowrap",
+                                        isHovered ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                    )}>
+                                        Salvar
+                                    </span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="group-hover:hidden">
+                                <p>Salvar</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </TooltipProvider>
-
-                    <Button variant="ghost" size="sm" className="text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3]" onClick={() => setReorderModalOpen(true)}>
-                        <Settings2 className="h-4 w-4 mr-1"/>
-                        Montar Apresentação
-                    </Button>
-
-                    <Button variant="ghost" size="sm" className="text-[#A7B0C0] hover:bg-[#232837] hover:text-[#E8ECF3]" onClick={handleStartPresentation} disabled={isStartingPresentation}>
-                        {isStartingPresentation ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <Presentation className="h-4 w-4 mr-1"/>}
-                        Apresentar
-                    </Button>
-                    <Button size="sm" className="bg-[#FF5678] text-[#0F1115] hover:bg-pink-500" onClick={handleSave} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-1"/> : <Save className="h-4 w-4 mr-1" />}
-                        Salvar
-                    </Button>
                 </div>
             </header>
             <ReorderModal isOpen={isReorderModalOpen} onOpenChange={setReorderModalOpen} />
