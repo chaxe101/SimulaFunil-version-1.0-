@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { ChangeEvent } from 'react';
@@ -94,12 +93,14 @@ const FileUploadSection = ({ node, onDataChange }: { node: any, onDataChange: (k
     }
 
     return (
-        <div className="space-y-2">
-            <Label>Arquivo</Label>
-            <div className='p-2 border rounded-md bg-muted/30 space-y-2'>
-                <p className="text-sm text-muted-foreground truncate">
-                    {node.data.fileName || "Nenhum arquivo enviado."}
-                </p>
+        <div className="space-y-1.5">
+            <Label className="text-[10px] text-gray-500 font-normal">Arquivo</Label>
+            <div className='p-2 border border-[#2a2f3f] rounded-md bg-[#0f1115] space-y-2'>
+                <div className="w-full overflow-hidden">
+                    <p className="text-[10px] text-gray-400 break-words line-clamp-2">
+                        {node.data.fileName || "Nenhum arquivo enviado."}
+                    </p>
+                </div>
                 <input 
                     type="file" 
                     id={`upload-prop-${node.id}`} 
@@ -109,9 +110,9 @@ const FileUploadSection = ({ node, onDataChange }: { node: any, onDataChange: (k
                     accept={getAcceptType(node.data.type)}
                 />
                 <Label htmlFor={`upload-prop-${node.id}`} className="w-full">
-                    <Button asChild variant="outline" size="sm" className="w-full cursor-pointer" disabled={isUploading}>
+                    <Button asChild variant="outline" size="sm" className="w-full cursor-pointer h-7 text-[10px]" disabled={isUploading}>
                         <div>
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            {isUploading ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Upload className="mr-1.5 h-3 w-3" />}
                             {isUploading ? 'Enviando...' : 'Trocar Arquivo'}
                         </div>
                     </Button>
@@ -133,10 +134,10 @@ export function PropertiesPanel() {
 
   if (!blockInfo) {
     return (
-      <aside className="w-80 border-l border-[#232837] bg-[#151922] p-4 flex flex-col">
-        <h3 className="text-lg font-semibold text-destructive">Bloco Inválido</h3>
-        <p className="text-sm text-muted-foreground">O tipo de bloco selecionado não é reconhecido.</p>
-      </aside>
+      <div className="fixed top-20 right-4 w-64 bg-[#1a1d29] border border-[#2a2f3f] rounded-2xl shadow-2xl p-3 z-50">
+        <h3 className="text-xs font-semibold text-destructive">Bloco Inválido</h3>
+        <p className="text-[10px] text-gray-500">O tipo de bloco selecionado não é reconhecido.</p>
+      </div>
     );
   }
 
@@ -154,23 +155,24 @@ export function PropertiesPanel() {
 
   const renderTaskFields = () => (
      <>
-        <div className="space-y-2">
-          <Label htmlFor="node-description">Descrição</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="node-description" className="text-[10px] text-gray-500 font-normal">Descrição</Label>
           <Textarea
             id="node-description"
             value={selectedNode.data.description || ''}
             onChange={(e) => handleDataChange('description', e.target.value)}
             placeholder="Adicione uma descrição detalhada..."
             rows={3}
+            className="min-h-[60px] text-[10px] resize-none bg-[#0f1115] border-[#2a2f3f]"
           />
         </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 font-normal">Status</Label>
           <Select
             value={selectedNode.data.status || 'A Fazer'}
             onValueChange={(value) => handleDataChange('status', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]">
               <SelectValue placeholder="Selecione o status" />
             </SelectTrigger>
             <SelectContent>
@@ -180,13 +182,13 @@ export function PropertiesPanel() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Prioridade</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 font-normal">Prioridade</Label>
           <Select
             value={selectedNode.data.priority || 'baixa'}
             onValueChange={(value) => handleDataChange('priority', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]">
               <SelectValue placeholder="Selecione a prioridade" />
             </SelectTrigger>
             <SelectContent>
@@ -196,18 +198,18 @@ export function PropertiesPanel() {
             </SelectContent>
           </Select>
         </div>
-         <div className="space-y-2">
-          <Label>Prazo Final</Label>
+         <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 font-normal">Prazo Final</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]",
                   !selectedNode.data.deadline && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-1.5 h-3 w-3" />
                 {selectedNode.data.deadline ? format(new Date(selectedNode.data.deadline), "PPP") : <span>Escolha uma data</span>}
               </Button>
             </PopoverTrigger>
@@ -221,18 +223,18 @@ export function PropertiesPanel() {
             </PopoverContent>
           </Popover>
         </div>
-        <div className="space-y-2">
-          <Label>Data de Início</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 font-normal">Data de Início</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]",
                   !selectedNode.data.startDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-1.5 h-3 w-3" />
                 {selectedNode.data.startDate ? format(new Date(selectedNode.data.startDate), "PPP") : <span>Escolha uma data</span>}
               </Button>
             </PopoverTrigger>
@@ -246,18 +248,18 @@ export function PropertiesPanel() {
             </PopoverContent>
           </Popover>
         </div>
-         <div className="space-y-2">
-          <Label>Data de Fim</Label>
+         <div className="space-y-1.5">
+          <Label className="text-[10px] text-gray-500 font-normal">Data de Fim</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full justify-start text-left font-normal",
+                  "w-full justify-start text-left font-normal h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]",
                   !selectedNode.data.endDate && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-1.5 h-3 w-3" />
                 {selectedNode.data.endDate ? format(new Date(selectedNode.data.endDate), "PPP") : <span>Escolha uma data</span>}
               </Button>
             </PopoverTrigger>
@@ -280,27 +282,29 @@ export function PropertiesPanel() {
     return (
       <>
         {blockInfo.hasDescription && (
-           <div className="space-y-2">
-            <Label htmlFor="node-description">Descrição</Label>
+           <div className="space-y-1.5">
+            <Label htmlFor="node-description" className="text-[10px] text-gray-500 font-normal">Descrição</Label>
             <Textarea
               id="node-description"
               value={selectedNode.data.description || ''}
               onChange={(e) => handleDataChange('description', e.target.value)}
               placeholder="Adicione uma descrição detalhada..."
               rows={3}
+              className="min-h-[60px] text-[10px] resize-none bg-[#0f1115] border-[#2a2f3f]"
             />
           </div>
         )}
 
         {blockInfo.hasLink && (
-            <div className="space-y-2">
-              <Label htmlFor="node-url">URL</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="node-url" className="text-[10px] text-gray-500 font-normal">URL</Label>
               <Input
                 id="node-url"
                 type="url"
                 value={selectedNode.data.url || ''}
                 onChange={(e) => handleDataChange('url', e.target.value)}
                 placeholder="https://exemplo.com"
+                className="h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f] truncate"
               />
             </div>
         )}
@@ -313,28 +317,29 @@ export function PropertiesPanel() {
   }
 
   return (
-    <aside className="w-80 border-l border-[#232837] bg-[#151922] flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b border-[#232837] h-14">
+    <div className="fixed top-20 right-4 w-64 bg-[#1a1d29] border border-[#2a2f3f] rounded-2xl shadow-2xl z-50 max-h-[calc(100vh-120px)] flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#2a2f3f]">
         <div className="flex items-center gap-2">
-          <div style={{ color: blockInfo.color }}>
-            {React.cloneElement(blockInfo.icon, { className: 'w-5 h-5' })}
+          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: blockInfo.color }}>
+            {React.cloneElement(blockInfo.icon, { className: 'w-3 h-3 text-white' })}
           </div>
-          <h3 className="text-base font-semibold">Propriedades</h3>
+          <h3 className="text-xs font-medium text-white">Propriedades</h3>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={unselectNode}>
-          <X className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-5 w-5 hover:bg-[#2a2f3f]" onClick={unselectNode}>
+          <X className="h-3 w-3" />
         </Button>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="node-label">Rótulo do Bloco</Label>
+        <div className="p-3 space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="node-label" className="text-[10px] text-gray-500 font-normal">Rótulo do Bloco</Label>
             <Input
               id="node-label"
               value={selectedNode.data.label || ''}
               onChange={(e) => handleDataChange('label', e.target.value)}
               placeholder={blockInfo.label}
+              className="h-7 text-[10px] bg-[#0f1115] border-[#2a2f3f]"
             />
           </div>
 
@@ -342,6 +347,6 @@ export function PropertiesPanel() {
 
         </div>
       </ScrollArea>
-    </aside>
+    </div>
   );
 }
