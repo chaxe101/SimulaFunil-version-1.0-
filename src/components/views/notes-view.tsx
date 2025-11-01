@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEditorStore } from '@/stores/editor-store';
@@ -176,7 +175,7 @@ export function NotesView() {
     if (editor && !editor.isDestroyed && editor.getHTML() !== currentNote.content) {
       editor.commands.setContent(currentNote.content, false);
     }
-    setHasUnsavedChanges(false); // Reset unsaved changes when note changes
+    setHasUnsavedChanges(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNote, editor]);
 
@@ -207,7 +206,7 @@ export function NotesView() {
   }
 
   return (
-    <div className="flex h-full w-full relative">
+    <div className="flex h-full w-full relative pt-20">
       <div className="flex flex-col h-full flex-grow" id="notes-export-area">
         <header className="flex-shrink-0 p-4 border-b border-border max-w-4xl mx-auto w-full flex items-center justify-between">
           <Input
