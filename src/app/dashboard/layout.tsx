@@ -2,25 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   Menu,
   Settings,
   Crown,
-  Bell,
   LogOut,
-  Loader2,
   LifeBuoy,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
@@ -50,48 +39,48 @@ export default function DashboardLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-  let mounted = true;
+    let mounted = true;
 
-  const getUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (mounted && session?.user) {
-      setUser(session.user);
-    }
-  };
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted && session?.user) {
+        setUser(session.user);
+      }
+    };
 
-  getUser();
+    getUser();
 
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-    if (!mounted) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
 
-    if (event === 'SIGNED_OUT') {
-      window.location.href = '/login';
-    } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
-      setUser(session.user);
-    }
-  });
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/login';
+      } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+        setUser(session.user);
+      }
+    });
 
-  return () => {
-    mounted = false;
-    subscription.unsubscribe();
-  };
-}, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleLogout = async () => {
-  try {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    
-    if (typeof window !== 'undefined') {
-      localStorage.clear();
-      sessionStorage.clear();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      
+      window.location.replace('/login');
+    } catch (error) {
+      console.error("Erro no logout:", error);
+      window.location.replace('/login');
     }
-    
-    window.location.replace('/login');
-  } catch (error) {
-    console.error("Erro no logout:", error);
-    window.location.replace('/login');
-  }
-};
+  };
 
   const SidebarNav = ({ className }: { className?: string }) => (
     <nav className={cn("grid items-start px-4 text-sm font-medium", className)}>
@@ -110,10 +99,6 @@ export default function DashboardLayout({
       ))}
     </nav>
   );
-
-  
-  
-  const userInitial = user?.user_metadata?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -162,31 +147,6 @@ export default function DashboardLayout({
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1" />
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">Notificações</span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar>
-                  <AvatarImage src={user?.user_metadata?.avatar_url || ''} />
-                  <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">Configurações</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </header>
         <main className="flex-1 p-4 sm:p-6">
           {children}
